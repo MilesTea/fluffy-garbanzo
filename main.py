@@ -26,14 +26,26 @@ for article in articles:
 	hubs = set(hub.find('span').text.lower() for hub in hubs)
 
 	# определение даты статьи
-	news_date_snippet = article.find(class_='tm-article-snippet__datetime-published')
-	news_date = datetime.strptime(news_date_snippet.contents[0].attrs['title'], '%Y-%m-%d, %H:%M').date()
+	article_date_snippet = article.find(class_='tm-article-snippet__datetime-published')
+	article_date = datetime.strptime(article_date_snippet.contents[0].attrs['title'], '%Y-%m-%d, %H:%M').date()
 
 	# определение заголовка статьи
-	title_snippet = article.find('a', class_='tm-article-snippet__title-link')
-	news_title = title_snippet.text
-	href = title_snippet['href']  # ссылка на статью
+	article_title_snippet = article.find('a', class_='tm-article-snippet__title-link')
+	article_title = article_title_snippet.text
+	article_href = article_title_snippet['href']  # ссылка на статью
+	article_url = base_url + article_href
 
-	url = base_url + href
-	if hubs & my_tags:
-		print(f'<{news_date}> - <{news_title}> - <{url}>')
+	tag_found = False
+
+	# опциональное задание (сильно замедляет работу программы)
+	article_response = requests.get(article_url, headers=headers).text
+	article_soup = bs4.BeautifulSoup(article_response, features='html.parser')
+	content = article_soup.findAll(id="post-content-body")
+	article_text = content[0].text
+	for tag in my_tags:
+		if (tag in article_text.lower()) or (tag in article_title.lower()):
+			tag_found = True
+	# опциональное задание
+
+	if (hubs & my_tags) or tag_found:
+		print(f'<{article_date}> - <{article_title}> - <{article_url}>')
